@@ -1,0 +1,24 @@
+# MATLAB
+*.asv
+*.mex*
+*.mlappinstall
+*.mlpkginstall
+*.mltbx
+slprj/
+octave-workspace
+
+# Veri ve Model dosyalari (buyuk dosyalar)
+data/*.mat
+data/*.json
+models/*.mat
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

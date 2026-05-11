@@ -1,0 +1,44 @@
+function matches = get_team_next_matches(team_id, limit)
+% GET_TEAM_NEXT_MATCHES - Takimin gelecek maclarini (fiksturunu) getirir
+%
+% Kullanim:
+%   matches = get_team_next_matches('36', 10)
+%
+% Girdiler:
+%   team_id - Takim ID'si (string veya number)
+%   limit   - Maksimum mac sayisi (varsayilan: 25)
+%
+% Ciktilar:
+%   matches - Fikstur bilgilerini iceren struct
+%             .teams   - Takim bilgileri lookup tablosu
+%             .matches - Gelecek mac listesi
+
+    if nargin < 2, limit = 25; end
+    
+    cfg = api_config();
+    team_id_str = num2str(team_id);
+    endpoint = sprintf(cfg.endpoints.team_next_matches, team_id_str);
+    url = sprintf('%s%s?limit=%d', cfg.base_url, endpoint, limit);
+    
+    fprintf('Takim gelecek maclari cekiliyor: ID=%s (limit=%d)\n', team_id_str, limit);
+    
+    [data, status] = http_get(url, 'Timeout', cfg.request.timeout);
+    
+    if status ~= 200 || isempty(data)
+        warning('GET_TEAM_NEXT_MATCHES:VeriYok', ...
+            'Takim ID "%s" icin gelecek mac bulunamadi.', team_id_str);
+        matches = struct('teams', struct(), 'matches', []);
+        return;
+    end
+    
+    matches = data;
+    
+    if isfield(matches, 'matches')
+        if iscell(matches.matches)
+            n = numel(matches.matches);
+        else
+            n = numel(matches.matches);
+        end
+        fprintf('  %d gelecek mac bulundu.\n', n);
+    end
+end
