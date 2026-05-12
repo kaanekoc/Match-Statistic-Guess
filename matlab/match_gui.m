@@ -44,13 +44,16 @@ function match_gui()
         'ItemsData', {'DEMO', 'COLLECT', 'TRAIN', 'PREDICT'}, ...
         'Position', [20 y_pos 260 30], 'ValueChangedFcn', @modeChanged);
     
-    % Tahmin Icin Takim ID'leri (Sadece Tahmin Modunda Gorunur)
+    % Tahmin Icin Takim Secimi (Sadece Tahmin Modunda Gorunur)
     y_pos = y_pos - dy - 10;
-    lblHome = uilabel(leftPanel, 'Text', 'Ev Sahibi Takım ID:', 'Position', [20 y_pos 120 22], 'Visible', 'off');
-    txtHome = uieditfield(leftPanel, 'numeric', 'Position', [20 y_pos-25 120 30], 'Visible', 'off');
+    btnLoadTeams = uibutton(leftPanel, 'push', 'Text', 'Takımları Getir', 'Position', [20 y_pos+5 260 25], 'Visible', 'off', 'ButtonPushedFcn', @loadTeams);
     
-    lblAway = uilabel(leftPanel, 'Text', 'Deplasman Takım ID:', 'Position', [160 y_pos 120 22], 'Visible', 'off');
-    txtAway = uieditfield(leftPanel, 'numeric', 'Position', [160 y_pos-25 120 30], 'Visible', 'off');
+    y_pos = y_pos - 35;
+    lblHome = uilabel(leftPanel, 'Text', 'Ev Sahibi Takım:', 'Position', [20 y_pos+5 120 22], 'Visible', 'off');
+    ddHome = uidropdown(leftPanel, 'Position', [20 y_pos-20 120 25], 'Visible', 'off', 'Items', {'--'}, 'ItemsData', {NaN});
+    
+    lblAway = uilabel(leftPanel, 'Text', 'Deplasman Takımı:', 'Position', [160 y_pos+5 120 22], 'Visible', 'off');
+    ddAway = uidropdown(leftPanel, 'Position', [160 y_pos-20 120 25], 'Visible', 'off', 'Items', {'--'}, 'ItemsData', {NaN});
     
     % Calistir Butonu
     y_pos = y_pos - dy - 50;
@@ -73,12 +76,50 @@ function match_gui()
     function modeChanged(~, ~)
         val = ddMode.Value;
         if strcmp(val, 'PREDICT')
-            lblHome.Visible = 'on'; txtHome.Visible = 'on';
-            lblAway.Visible = 'on'; txtAway.Visible = 'on';
+            btnLoadTeams.Visible = 'on';
+            lblHome.Visible = 'on'; ddHome.Visible = 'on';
+            lblAway.Visible = 'on'; ddAway.Visible = 'on';
         else
-            lblHome.Visible = 'off'; txtHome.Visible = 'off';
-            lblAway.Visible = 'off'; txtAway.Visible = 'off';
+            btnLoadTeams.Visible = 'off';
+            lblHome.Visible = 'off'; ddHome.Visible = 'off';
+            lblAway.Visible = 'off'; ddAway.Visible = 'off';
         end
+    end
+
+    function loadTeams(~, ~)
+        league = ddLig.Value;
+        btnLoadTeams.Enable = 'off';
+        lblStatus.Text = 'Durum: Takımlar yükleniyor...';
+        logMsg(sprintf('%s ligi takımları getiriliyor...', league));
+        
+        try
+            teams = get_league_teams(league);
+            if isempty(teams)
+                logMsg('HATA: Takımlar bulunamadı!');
+                btnLoadTeams.Enable = 'on';
+                lblStatus.Text = 'Durum: Bekliyor';
+                return;
+            end
+            
+            names = {teams.name};
+            ids = num2cell([teams.id]);
+            
+            ddHome.Items = names;
+            ddHome.ItemsData = ids;
+            
+            ddAway.Items = names;
+            ddAway.ItemsData = ids;
+            if numel(teams) > 1
+                ddAway.Value = ids{2};
+            end
+            
+            logMsg(sprintf('%d takım başarıyla yüklendi.', numel(teams)));
+            lblStatus.Text = 'Durum: Bekliyor';
+        catch ME
+            logMsg(['HATA: ' ME.message]);
+            lblStatus.Text = 'Durum: Bekliyor';
+        end
+        btnLoadTeams.Enable = 'on';
     end
 
     function logMsg(msg)
@@ -113,9 +154,13 @@ function match_gui()
                 case 'TRAIN'
                     run_train(league, limit);
                 case 'PREDICT'
-                    home_id = txtHome.Value;
-                    away_id = txtAway.Value;
-                    run_predict(home_id, away_id);
+                    home_id = ddHome.Value;
+                    away_id = ddAway.Value;
+                    if isnan(home_id) || isnan(away_id)
+                        logMsg('Lütfen önce takımları yükleyin ve geçerli bir seçim yapın.');
+                    else
+                        run_predict(home_id, away_id);
+                    end
             end
         catch ME
             logMsg('');
