@@ -29,9 +29,11 @@ function models = train_all_models(X, y_score, y_over25, y_result, y_cards, y_co
     models.training_date = datestr(now, 'yyyy-mm-dd HH:MM:SS');
     models.n_samples = size(X, 1);
     
-    % Veriyi normalize et
-    [X_norm, mu, sigma] = zscore(X);
+    % Veriyi normalize et (zscore kullanmadan manuel hesaplama)
+    mu = mean(X, 1);
+    sigma = std(X, 0, 1); % 0 = N-1 (unbiased), 1 = sutun bazinda
     sigma(sigma == 0) = 1; % Sifir varyansli ozellikleri koru
+    X_norm = (X - mu) ./ sigma;
     models.normalization.mu = mu;
     models.normalization.sigma = sigma;
     
