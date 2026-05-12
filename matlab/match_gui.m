@@ -87,7 +87,11 @@ function match_gui()
         if ischar(current)
             current = {current};
         end
-        txtResult.Value = [current; {msg}];
+        if isempty(current) || (numel(current) == 1 && isempty(current{1}))
+            txtResult.Value = {msg};
+        else
+            txtResult.Value = [current; {msg}];
+        end
         scroll(txtResult, 'bottom');
         drawnow;
     end
@@ -98,7 +102,7 @@ function match_gui()
         limit = spnMatchLimit.Value;
         
         btnRun.Enable = 'off';
-        txtResult.Value = {};
+        txtResult.Value = {''};
         
         try
             switch mode
